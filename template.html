@@ -187,13 +187,6 @@
   .inline-comment-text { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .inline-comment-more { font-size: 12px; color: var(--text-muted); padding: 4px 0; }
 
-  /* Changelog */
-  .changelog-section { margin-bottom: 24px; }
-  .changelog-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-  .changelog-items { display: flex; flex-direction: column; gap: 8px; }
-  .cl-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
-  .cl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
   /* Tab system */
   .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
   .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
@@ -228,8 +221,6 @@
 
   <div class="tabs">
     <div class="tab active" onclick="switchTab('issues')">📋 Issues &amp; PRs</div>
-    <div class="tab" onclick="switchTab('changelog')">🔄 Changelog</div>
-    <div class="tab" onclick="switchTab('analytics')">📊 Analytics</div>
     <div class="tab" onclick="switchTab('voc')">🏢 VOC <span style="background:#d29922;color:#000;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;">8</span></div>
   </div>
 
@@ -302,20 +293,6 @@
     </div>
   </div>
 
-  <!-- CHANGELOG TAB -->
-  <div class="tab-pane" id="tab-changelog">
-    <div id="changelogContent">
-      <p style="color:var(--text-muted); margin-bottom:16px;">This changelog tracks changes between fetches. Run the script daily to accumulate history.</p>
-      <div id="changelogList"></div>
-    </div>
-  </div>
-
-  <!-- ANALYTICS TAB -->
-  <div class="tab-pane" id="tab-analytics">
-    <div id="analyticsContent" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"></div>
-  </div>
-
-
   <!-- VOC TAB -->
   <div class="tab-pane" id="tab-voc">
     <div style="margin-bottom:20px;">
@@ -358,7 +335,6 @@ const PAGE_SIZE = 25;
 let stateFilter = 'open';
 let labelFilter = null;
 let searchQuery = '';
-let changelog = JSON.parse(localStorage.getItem('mcp_changelog') || '[]');
 let jiraOnlyMode = true;
 
 const JIRA_KEYWORDS = [
@@ -387,8 +363,6 @@ function init() {
   renderLabelFilters();
   renderLabelChart();
   applyFilters();
-  renderChangelog();
-  renderAnalytics();
 }
 
 // ═══════════════════════════════════════════════════
@@ -635,126 +609,7 @@ function closeModal(e) { if (e.target === document.getElementById('modalOverlay'
 function closeModalBtn() { document.getElementById('modalOverlay').classList.remove('open'); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
 
-// ═══════════════════════════════════════════════════
-// CHANGELOG
-// ═══════════════════════════════════════════════════
-function renderChangelog() {
-  const el = document.getElementById('changelogList');
-  if (!changelog.length) {
-    el.innerHTML = '<div style="color:var(--text-muted);padding:40px;text-align:center;">No changelog entries yet. Click <strong>↻ Refresh</strong> to start tracking changes.</div>';
-    return;
-  }
 
-  const byDate = {};
-  changelog.forEach(entry => {
-    const date = entry.timestamp.split('T')[0];
-    if (!byDate[date]) byDate[date] = [];
-    byDate[date].push(entry);
-  });
-
-  el.innerHTML = Object.entries(byDate).sort((a,b) => b[0].localeCompare(a[0])).map(([date, entries]) => `
-    <div class="changelog-section">
-      <h2>📅 ${date} <span style="color:var(--text-muted);font-size:13px;font-weight:400">(${entries.length} change${entries.length!==1?'s':''})</span></h2>
-      <div class="changelog-items">
-        ${entries.map(e => `
-          <div class="cl-item">
-            <div class="cl-dot" style="background:${e.type==='new'?'var(--green)':e.type==='closed'?'var(--text-muted)':'var(--yellow)'}"></div>
-            <span style="color:${e.type==='new'?'var(--green)':e.type==='closed'?'var(--text-muted)':'var(--yellow)'}">
-              ${e.type==='new'?'NEW':e.type==='closed'?'CLOSED':'UPDATED'}
-            </span>
-            <a href="${e.url}" target="_blank" style="flex:1">#${e.number} ${escHtml(e.title)}</a>
-            <span style="color:var(--text-muted);font-size:11px">${e.timestamp.split('T')[1].split('.')[0]}</span>
-          </div>`).join('')}
-      </div>
-    </div>`).join('');
-}
-
-// ═══════════════════════════════════════════════════
-// ANALYTICS
-// ═══════════════════════════════════════════════════
-function renderAnalytics() {
-  const issues = getVisibleItems().filter(i => !i.is_pr);
-  const open = issues.filter(i => i.state === 'open');
-  const closed = issues.filter(i => i.state === 'closed');
-
-  // Top authors
-  const authors = {};
-  issues.forEach(i => { authors[i.user] = (authors[i.user] || 0) + 1; });
-  const topAuthors = Object.entries(authors).sort((a,b) => b[1]-a[1]).slice(0, 8);
-  const maxA = topAuthors[0]?.[1] || 1;
-
-  // Label breakdown
-  const labelMap = {};
-  issues.forEach(i => i.labels.forEach(l => {
-    if (!labelMap[l.name]) labelMap[l.name] = {...l, open:0, closed:0};
-    labelMap[l.name][i.state]++;
-  }));
-  const topLabels = Object.values(labelMap).sort((a,b) => (b.open+b.closed)-(a.open+a.closed));
-
-  // Activity over time (by month)
-  const byMonth = {};
-  issues.forEach(i => {
-    const m = i.created_at.slice(0,7);
-    if (!byMonth[m]) byMonth[m] = 0;
-    byMonth[m]++;
-  });
-  const months = Object.entries(byMonth).sort((a,b) => a[0].localeCompare(b[0])).slice(-12);
-  const maxM = Math.max(...months.map(m => m[1]), 1);
-
-  document.getElementById('analyticsContent').innerHTML = `
-    <div class="sidebar-card" style="grid-column:1/-1">
-      <h3>Issues Over Time (by month opened)</h3>
-      <div style="display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:12px;">
-        ${months.map(([m, c]) => `
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <div style="flex:1;display:flex;align-items:flex-end;width:100%;">
-              <div style="width:100%;height:${Math.round(c/maxM*80)}px;background:var(--accent);border-radius:3px 3px 0 0;min-height:4px;" title="${c} issues"></div>
-            </div>
-            <div style="font-size:10px;color:var(--text-muted);transform:rotate(-45deg);white-space:nowrap;">${m.slice(5)}</div>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <div class="sidebar-card">
-      <h3>Top Issue Authors</h3>
-      <div class="mini-chart" style="margin-top:8px;">
-        ${topAuthors.map(([user, count]) => `
-          <div class="chart-bar-row">
-            <div class="chart-bar-label" title="${user}">${user}</div>
-            <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(count/maxA*100).toFixed(1)}%;background:var(--accent);"></div></div>
-            <div class="chart-bar-num">${count}</div>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <div class="sidebar-card">
-      <h3>Labels: Open vs Closed</h3>
-      <div style="margin-top:8px;">
-        ${topLabels.map(l => `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-              <span style="color:#${l.color}">${l.name}</span>
-              <span style="color:var(--text-muted)">${l.open} open · ${l.closed} closed</span>
-            </div>
-            <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;display:flex;">
-              <div style="width:${((l.open/(l.open+l.closed))*100).toFixed(1)}%;background:#${l.color};opacity:0.9;"></div>
-              <div style="flex:1;background:#${l.color};opacity:0.25;"></div>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <div class="sidebar-card" style="grid-column:1/-1">
-      <h3>Quick Stats</h3>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px;text-align:center;">
-        <div><div style="font-size:24px;font-weight:700;color:var(--accent)">${(open.length/(issues.length||1)*100).toFixed(0)}%</div><div style="font-size:12px;color:var(--text-muted)">Still Open</div></div>
-        <div><div style="font-size:24px;font-weight:700;color:var(--green)">${issues.filter(i=>i.comments>0).length}</div><div style="font-size:12px;color:var(--text-muted)">With Comments</div></div>
-        <div><div style="font-size:24px;font-weight:700;color:var(--yellow)">${issues.filter(i=>i.labels.length===0).length}</div><div style="font-size:12px;color:var(--text-muted)">Unlabeled</div></div>
-        <div><div style="font-size:24px;font-weight:700;color:var(--purple)">${issues.reduce((s,i)=>s+i.comments,0)}</div><div style="font-size:12px;color:var(--text-muted)">Total Comments</div></div>
-      </div>
-    </div>
-  `;
-}
 
 // ═══════════════════════════════════════════════════
 // REFRESH (fetch live from GitHub API)
@@ -925,7 +780,7 @@ function renderVOC() {
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  const tabs = ['issues', 'changelog', 'analytics', 'voc'];
+  const tabs = ['issues', 'voc'];
   if (name === 'voc') renderVOC();
   const idx = tabs.indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
