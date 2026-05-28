@@ -225,7 +225,7 @@
 
   <div class="tabs">
     <div class="tab active" onclick="switchTab('issues')">📋 GitHub Issues <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">atlassian/atlassian-mcp-server</span></div>
-    <div class="tab" onclick="switchTab('tools')">🔧 MCP Tools <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">support.atlassian.com/atlassian-rovo-mcp-server</span></div>
+    <div class="tab" onclick="switchTab('tools')">🔧 MCP Tools <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">support.atlassian.com</span></div>
     <div class="tab" onclick="switchTab('voc')">🏢 Enterprise VOC <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">production.customer_360.enterprise_voc</span></div>
     <div class="tab" onclick="switchTab('jtbd')">🎯 Jobs To Be Done <span style="background:#a371f7;color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;">12</span></div>
   </div>
@@ -822,12 +822,19 @@ function renderVOC() {
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  const tabs = ['issues', 'voc', 'jtbd'];
+  const tabs = ['issues', 'tools', 'voc', 'jtbd'];
   if (name === 'voc') renderVOC();
   if (name === 'jtbd') renderJTBD();
+  if (name === 'tools') initToolsTab();
   const idx = tabs.indexOf(name);
-  document.querySelectorAll('.tab')[idx].classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+  if (idx >= 0) document.querySelectorAll('.tab')[idx].classList.add('active');
+  const pane = document.getElementById('tab-' + name);
+  if (pane) pane.classList.add('active');
+  // Fallback for tools which uses different div id
+  if (name === 'tools') {
+    document.getElementById('tab-tools').style.display = 'block';
+    document.getElementById('tab-tools').classList.add('active');
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -860,7 +867,86 @@ function timeAgo(iso) {
 }
 
 init();
+
+
+// ═══════════ TOOLS TAB ═══════════
+const mcpTools = [{"name": "atlassianUserInfo", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Get current authenticated user info from Atlassian"}, {"name": "getAccessibleAtlassianResources", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Get cloud IDs and site URLs for all accessible Atlassian resources"}, {"name": "search", "product": "Platform", "category": "Search", "type": "read", "auth": "both", "description": "Natural language Rovo search across all Atlassian products"}, {"name": "fetch", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Fetch any Atlassian resource by ARI (Atlassian Resource Identifier)"}, {"name": "searchJiraIssuesUsingJql", "product": "Jira", "category": "Search", "type": "read", "auth": "both", "description": "Search Jira issues using JQL (Jira Query Language)"}, {"name": "getJiraIssue", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get details of a specific Jira issue by ID or key"}, {"name": "getVisibleJiraProjects", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get Jira projects visible to the current user"}, {"name": "lookupJiraAccountId", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Look up a Jira user account ID by name or email"}, {"name": "getJiraIssueTransitions", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get available workflow transitions for a Jira issue"}, {"name": "getJiraBoardsForProject", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all boards associated with a Jira project"}, {"name": "getJiraSprintsForBoard", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all sprints for a given Jira board"}, {"name": "createJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Create a new Jira issue"}, {"name": "editJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Update fields on an existing Jira issue"}, {"name": "transitionJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Transition a Jira issue to a new workflow status"}, {"name": "addCommentToJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Add a comment to a Jira issue"}, {"name": "addWorklogToJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Log time worked on a Jira issue"}, {"name": "createJiraIssueLink", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Create a link between two Jira issues (e.g. blocks, duplicates)"}, {"name": "bulkCreateJiraIssues", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Bulk create multiple Jira issues in one operation"}, {"name": "bulkMoveJiraIssuesToEpic", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Move multiple Jira issues to an epic in bulk"}, {"name": "getJiraIssueLinkTypes", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all available issue link types for a Jira site"}, {"name": "searchConfluenceUsingCql", "product": "Confluence", "category": "Search", "type": "read", "auth": "both", "description": "Search Confluence content using CQL (Confluence Query Language)"}, {"name": "getConfluencePage", "product": "Confluence", "category": "Read", "type": "read", "auth": "both", "description": "Get a Confluence page or blog post by ID"}, {"name": "getConfluenceSpace", "product": "Confluence", "category": "Read", "type": "read", "auth": "both", "description": "Get details of a specific Confluence space"}, {"name": "listConfluenceSpaces", "product": "Confluence", "category": "Read", "type": "read", "auth": "both", "description": "List all Confluence spaces accessible to the current user"}, {"name": "getConfluencePageComments", "product": "Confluence", "category": "Read", "type": "read", "auth": "both", "description": "Get footer comments on a Confluence page"}, {"name": "getConfluenceCommentChildren", "product": "Confluence", "category": "Read", "type": "read", "auth": "both", "description": "Get child/reply comments on a Confluence comment"}, {"name": "createConfluencePage", "product": "Confluence", "category": "Write", "type": "write", "auth": "both", "description": "Create a new Confluence page or blog post"}, {"name": "updateConfluencePage", "product": "Confluence", "category": "Write", "type": "write", "auth": "both", "description": "Update the content or title of an existing Confluence page"}, {"name": "addConfluencePageComment", "product": "Confluence", "category": "Write", "type": "write", "auth": "both", "description": "Add a footer or inline comment to a Confluence page"}, {"name": "deleteConfluencePage", "product": "Confluence", "category": "Write", "type": "write", "auth": "both", "description": "Delete a Confluence page"}, {"name": "searchCompassComponents", "product": "Compass", "category": "Search", "type": "read", "auth": "both", "description": "Search Compass components by name, type, or owner"}, {"name": "getCompassComponent", "product": "Compass", "category": "Read", "type": "read", "auth": "both", "description": "Get details of a specific Compass component"}, {"name": "createCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Create a new Compass component (service, library, app)"}, {"name": "updateCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Update metadata or relationships of a Compass component"}, {"name": "deleteCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Delete a Compass component"}, {"name": "getCompassComponentEvents", "product": "Compass", "category": "Read", "type": "read", "auth": "both", "description": "Get activity events (deployments, alerts) for a Compass component"}, {"name": "bulkCreateCompassComponents", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Bulk create Compass components from CSV/JSON"}, {"name": "getJsmOpsAlerts", "product": "JSM", "category": "Read", "type": "read", "auth": "token", "description": "Query JSM ops alerts by ID, alias, or search criteria"}, {"name": "updateJsmOpsAlert", "product": "JSM", "category": "Write", "type": "write", "auth": "token", "description": "Acknowledge, close, or escalate a JSM ops alert"}, {"name": "getJsmOpsScheduleInfo", "product": "JSM", "category": "Read", "type": "read", "auth": "token", "description": "View on-call schedules, rotations, and coverage"}, {"name": "getJsmOpsTeamInfo", "product": "JSM", "category": "Read", "type": "read", "auth": "token", "description": "Get JSM team info including escalation policies and roles"}, {"name": "getJsmOpsOnCallUser", "product": "JSM", "category": "Read", "type": "read", "auth": "token", "description": "Get current and next on-call responders for a schedule"}, {"name": "getContextForJiraIssue", "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get full context for a Jira issue including linked PRs, commits, branches, and hierarchy"}, {"name": "getRelatedReposForJiraIssue", "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get related repositories for a Jira issue with confidence scores"}, {"name": "bitbucketWorkspace", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List or get Bitbucket workspace details"}, {"name": "bitbucketRepository", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List repos, get repo info, default reviewers, or commit reports"}, {"name": "bitbucketPullRequest", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "Create, get, list, merge, approve, comment on, or diff pull requests"}, {"name": "bitbucketRepoContent", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "Browse repo content, manage branches, commit files"}, {"name": "bitbucketPipeline", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "List, run, get pipeline steps and logs"}, {"name": "bitbucketDeployment", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List or get Bitbucket deployment details"}, {"name": "bitbucketEnvironment", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "List, create, update, delete Bitbucket environments"}, {"name": "bitbucketUser", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "Get current Bitbucket user information"}];
+let activeToolProduct = 'all';
+const PRODUCT_COLORS = {'Jira':'#0052cc','Confluence':'#0065ff','Compass':'#6554c0','JSM':'#de350b','Bitbucket':'#0747a6','Platform':'#00875a','Teamwork Graph':'#ff8b00'};
+const TYPE_COLORS = {'read':'#1a7f37','write':'#cf222e','both':'#9a6700'};
+
+function renderToolsStats() {
+  const reads  = mcpTools.filter(t=>t.type==='read').length;
+  const writes = mcpTools.filter(t=>t.type==='write').length;
+  const both   = mcpTools.filter(t=>t.type==='both').length;
+  document.getElementById('tools-stats').innerHTML = `
+    <span style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:13px;">🔧 <strong>${mcpTools.length}</strong> tools</span>
+    <span style="background:#0e2d0e;border:1px solid #1a7f37;border-radius:6px;padding:5px 12px;font-size:13px;color:#3fb950;">📖 <strong>${reads}</strong> read</span>
+    <span style="background:#2d0e0e;border:1px solid #cf222e;border-radius:6px;padding:5px 12px;font-size:13px;color:#f85149;">✏️ <strong>${writes}</strong> write</span>
+    <span style="background:#2d1f00;border:1px solid #9a6700;border-radius:6px;padding:5px 12px;font-size:13px;color:#d4a72c;">⚡ <strong>${both}</strong> read+write</span>
+  `;
+}
+
+function renderToolProductFilters() {
+  const products = ['all',...new Set(mcpTools.map(t=>t.product))];
+  document.getElementById('tools-product-filters').innerHTML = products.map(p=>{
+    const color = p==='all'?'#388bfd':(PRODUCT_COLORS[p]||'#888');
+    const active = activeToolProduct===p;
+    const count = p==='all'?mcpTools.length:mcpTools.filter(t=>t.product===p).length;
+    return `<button onclick="activeToolProduct='${p}';renderTools();renderToolProductFilters()"
+      style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${color};background:${active?color:'transparent'};color:${active?'#fff':color};">
+      ${p==='all'?'🌐 All':p} (${count})</button>`;
+  }).join('');
+}
+
+function renderTools() {
+  const q=(document.getElementById('toolsSearch')?.value||'').toLowerCase();
+  const filtered=mcpTools.filter(t=>{
+    const mp=activeToolProduct==='all'||t.product===activeToolProduct;
+    const ms=!q||t.name.toLowerCase().includes(q)||t.description.toLowerCase().includes(q)||t.product.toLowerCase().includes(q);
+    return mp&&ms;
+  });
+  const typeIcon={read:'📖',write:'✏️',both:'⚡'};
+  document.getElementById('toolsList').innerHTML=filtered.map(t=>{
+    const col=PRODUCT_COLORS[t.product]||'#888';
+    const tcol=TYPE_COLORS[t.type]||'#888';
+    return `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s;"
+      onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:flex-start;gap:8px;justify-content:space-between;">
+        <div>
+          <div style="font-family:monospace;font-size:13px;font-weight:700;color:var(--text);">${escHtml(t.name)}</div>
+          <div style="font-size:11px;color:${col};margin-top:2px;font-weight:600;">${t.product}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${tcol}22;color:${tcol};border:1px solid ${tcol}44;">${typeIcon[t.type]} ${t.type.toUpperCase()}</span>
+          ${t.auth==='token'?'<span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#de350b22;color:#de350b;border:1px solid #de350b44;">🔑 Token only</span>':''}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">${escHtml(t.description)}</div>
+    </div>`;
+  }).join('')||'<div style="color:var(--text-muted);text-align:center;padding:40px;">No tools match your search.</div>';
+}
+
+function initToolsTab() {
+  renderToolsStats();
+  renderToolProductFilters();
+  renderTools();
+}
+// ═════════════════════════════════
+
 </script>
+
+
+  <!-- Tools Tab -->
+  <div id="tab-tools" class="tab-pane" style="display:none;padding:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <div id="tools-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <input id="toolsSearch" type="text" placeholder="🔍 Search tools..." oninput="renderTools()"
+        style="margin-left:auto;padding:7px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;min-width:200px;">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="tools-product-filters"></div>
+    <div id="toolsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;"></div>
+  </div>
 
 </body>
 </html>
