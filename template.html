@@ -830,11 +830,6 @@ function switchTab(name) {
   if (idx >= 0) document.querySelectorAll('.tab')[idx].classList.add('active');
   const pane = document.getElementById('tab-' + name);
   if (pane) pane.classList.add('active');
-  // Fallback for tools which uses different div id
-  if (name === 'tools') {
-    document.getElementById('tab-tools').style.display = 'block';
-    document.getElementById('tab-tools').classList.add('active');
-  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -938,7 +933,7 @@ function initToolsTab() {
 
 
   <!-- Tools Tab -->
-  <div id="tab-tools" class="tab-pane" style="display:none;padding:20px;">
+  <div id="tab-tools" class="tab-pane" style="padding:20px;">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <div id="tools-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
       <input id="toolsSearch" type="text" placeholder="🔍 Search tools..." oninput="renderTools()"
