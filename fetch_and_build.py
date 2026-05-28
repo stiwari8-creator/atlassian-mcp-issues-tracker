@@ -2,8 +2,9 @@
 """
 Daily fetcher: pulls latest issues + comments from atlassian/atlassian-mcp-server
 and VOC issues from Socrates, then rebuilds the dashboard HTML with fresh data.
+Also auto-refreshes JTBD signal strength and cross-links based on new issues.
 """
-import urllib.request, urllib.parse, json, re, time, os, base64
+import urllib.request, json, re, time, os
 from datetime import datetime, timezone
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
@@ -18,6 +19,22 @@ JIRA_KEYWORDS = [
     'addjiraissue', 'editjiraissue', 'addjira', 'jira workflow', 'jira automation'
 ]
 
+# JTBD keyword matchers — used to auto-detect new issues that belong to each JTBD
+JTBD_MATCHERS = {
+    "jtbd-1": ["auth", "oauth", "token", "login", "re-auth", "reauth", "pkce", "refresh token", "credential", "session", "expir"],
+    "jtbd-2": ["permission", "restrict", "access control", "granular", "external user", "admin", "policy", "block", "domain", "per site"],
+    "jtbd-3": ["attachment", "upload", "download", "file", "image", "screenshot", "pdf"],
+    "jtbd-4": ["custom field", "acceptance criteria", "field support", "customfield", "actual result", "expected result"],
+    "jtbd-5": ["duplicate", "anonymous project", "create issue", "createjiraissue", "double", "two tickets"],
+    "jtbd-6": ["payload", "verbose", "token usage", "context window", "adf", "bloat", "token limit", "large result", "crash", "size limit"],
+    "jtbd-7": ["sprint", "board", "epic", "agile", "subtask", "child issue", "hierarchy", "backlog"],
+    "jtbd-8": ["data center", "server", "on-premise", "self-hosted", "dc", "local", "cluster"],
+    "jtbd-9": ["worklog", "time track", "time log", "logged time", "tempo"],
+    "jtbd-10": ["multi-site", "multiple site", "multi site", "multiple atlassian", "two sites", "cross-site"],
+    "jtbd-11": ["headless", "ci/cd", "pipeline", "kubernetes", "lambda", "n8n", "unattended", "server-to-server", "localhost"],
+    "jtbd-12": ["jpd", "product discovery", "insight", "ideas"],
+}
+
 def is_jira(item):
     t = item['title'].lower()
     return any(kw in t for kw in JIRA_KEYWORDS)
@@ -30,37 +47,7 @@ def gh_fetch(url):
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())
 
-def socrates_fetch(sql):
-    """Submit SQL to Socrates and poll for results."""
-    SOCRATES_TOKEN = os.environ.get("SOCRATES_TOKEN", GITHUB_TOKEN)
-    headers = {
-        "Authorization": f"Bearer {SOCRATES_TOKEN}",
-        "Content-Type": "application/json",
-        "User-Agent": "mcp-tracker-bot/1.0"
-    }
-    # Submit query
-    body = json.dumps({"statement": sql}).encode()
-    req = urllib.request.Request(
-        "https://dbc-dp-production.cloud.databricks.com/api/2.0/sql/statements",
-        data=body, headers=headers
-    )
-    with urllib.request.urlopen(req) as r:
-        result = json.loads(r.read())
-    statement_id = result["statement_id"]
-    # Poll until done
-    for _ in range(30):
-        time.sleep(5)
-        req2 = urllib.request.Request(
-            f"https://dbc-dp-production.cloud.databricks.com/api/2.0/sql/statements/{statement_id}",
-            headers=headers
-        )
-        with urllib.request.urlopen(req2) as r:
-            status = json.loads(r.read())
-        if status["status"]["state"] in ("SUCCEEDED", "FAILED", "CANCELED"):
-            return status
-    return None
-
-# ─── GITHUB ISSUES ───────────────────────────────────────
+# ─── GITHUB ISSUES ────────────────────────────────────────────────────────────
 print("Fetching GitHub issues...")
 all_raw = []
 page = 1
@@ -73,7 +60,6 @@ while True:
     if len(data) < 100:
         break
     page += 1
-
 print(f"Total: {len(all_raw)} items")
 
 all_items = []
@@ -120,70 +106,68 @@ for idx, issue in enumerate(jira_with_comments):
         print(f"  Error #{num}: {e}")
     time.sleep(0.15)
 
-# ─── VOC DATA ────────────────────────────────────────────
-print("\nFetching VOC data from Socrates...")
-voc_items = []
-try:
-    import subprocess, sys
-    # Use databricks-sdk or fall back to saved data if no token
-    SOCRATES_TOKEN = os.environ.get("SOCRATES_TOKEN", "")
-    if not SOCRATES_TOKEN:
-        print("  No SOCRATES_TOKEN — skipping VOC refresh, using baked-in data")
-    else:
-        result = socrates_fetch("""
-            SELECT customer_domain, issue_id, summary, description, priority,
-                   created, updated, resolution_date, status, status_display,
-                   interested_teams, product, url
-            FROM production.customer_360.enterprise_voc
-            WHERE day = (SELECT MAX(day) FROM production.customer_360.enterprise_voc)
-            AND (LOWER(summary) LIKE '%mcp%' OR LOWER(description) LIKE '%mcp%'
-                 OR LOWER(summary) LIKE '%rovo mcp%' OR LOWER(description) LIKE '%rovo mcp%')
-            ORDER BY updated DESC
-            LIMIT 200
-        """)
-        if result and result["status"]["state"] == "SUCCEEDED":
-            rows = result.get("result", {}).get("data_array", [])
-            issues_map = {}
-            for row in rows:
-                customer, issue_id, summary, desc, priority, created, updated, res_date, status, status_display, teams, product, url = row
-                if issue_id not in issues_map:
-                    issues_map[issue_id] = {
-                        "issue_id": issue_id, "summary": summary,
-                        "description": (desc or "")[:300], "priority": priority,
-                        "created": created, "updated": updated,
-                        "resolution_date": res_date, "status": status,
-                        "status_display": status_display, "interested_teams": teams,
-                        "product": product, "url": url,
-                        "customers": [], "customer_count": 0,
-                    }
-                if customer not in issues_map[issue_id]["customers"]:
-                    issues_map[issue_id]["customers"].append(customer)
-                    issues_map[issue_id]["customer_count"] += 1
-            voc_items = sorted(issues_map.values(), key=lambda x: -x["customer_count"])
-            print(f"  Got {len(voc_items)} unique VOC issues")
-        else:
-            print(f"  Socrates query failed: {result}")
-except Exception as e:
-    print(f"  VOC fetch error: {e} — using baked-in data")
+# ─── AUTO-REFRESH JTBD ────────────────────────────────────────────────────────
+print("\nAuto-refreshing JTBD signal strength...")
 
-# ─── REBUILD HTML ─────────────────────────────────────────
+def matches_jtbd(issue, jtbd_id):
+    keywords = JTBD_MATCHERS.get(jtbd_id, [])
+    text = (issue["title"] + " " + issue["body"]).lower()
+    return any(kw in text for kw in keywords)
+
+# Load current JTBD from template
 with open("template.html") as f:
     template = f.read()
 
-safe_json = json.dumps(all_items, ensure_ascii=True)
+jtbd_match = re.search(r'const jtbdItems = (\[.*?\]);', template, re.DOTALL)
+jtbd_items = json.loads(jtbd_match.group(1))
+
+# For each JTBD, find all matching GitHub issues (open only)
+open_issues = [i for i in all_items if not i["is_pr"] and i["state"] == "open"]
+
+for jtbd in jtbd_items:
+    jtbd_id = jtbd["id"]
+    # Find matching open issues not already in the list
+    existing_numbers = {g["number"] for g in jtbd.get("gh_issues", [])}
+    new_matches = [
+        {"number": i["number"], "title": i["title"]}
+        for i in open_issues
+        if matches_jtbd(i, jtbd_id) and i["number"] not in existing_numbers
+    ]
+    if new_matches:
+        print(f"  {jtbd_id}: +{len(new_matches)} new matching issues: {[m['number'] for m in new_matches]}")
+        jtbd["gh_issues"] = jtbd.get("gh_issues", []) + new_matches
+
+    # Recalculate signal strength based on total evidence
+    gh_count = len(jtbd.get("gh_issues", []))
+    voc_count = len(jtbd.get("voc_issues", []))
+    total_customers = sum(len(v.get("customers", [])) for v in jtbd.get("voc_issues", []))
+    # Signal = base from gh_issues + boost from VOC customer count
+    new_signal = min(10, gh_count + min(5, voc_count * 2) + min(2, total_customers // 4))
+    if new_signal != jtbd["signal_strength"]:
+        print(f"  {jtbd_id}: signal {jtbd['signal_strength']} → {new_signal}")
+        jtbd["signal_strength"] = new_signal
+
+# Re-sort by signal strength
+jtbd_items.sort(key=lambda x: -x["signal_strength"])
+
+# ─── REBUILD HTML ─────────────────────────────────────────────────────────────
 fetched_at = datetime.now(timezone.utc).isoformat()
 
 # Replace GitHub data
+safe_json = json.dumps(all_items, ensure_ascii=True)
 template = re.sub(
     r'<script type="application/json" id="__data__">.*?</script>',
     f'<script type="application/json" id="__data__">{safe_json}</script>',
     template, flags=re.DOTALL
 )
 
-# Replace VOC data only if we got fresh data
-if voc_items:
-    voc_json = json.dumps(voc_items, ensure_ascii=True)
-    template = re.sub(r'const vocItems = \[.*?\];', f'const vocItems = {voc_json};', template, flags=re.DOTALL)
+# Replace JTBD data
+jtbd_json = json.dumps(jtbd_items, ensure_ascii=True)
+template = re.sub(
+    r'const jtbdItems = \[.*?\];',
+    f'const jtbdItems = {jtbd_json};',
+    template, flags=re.DOTALL
+)
 
 # Replace timestamp
 template = re.sub(r"formatDate\('[^']+'\)", f"formatDate('{fetched_at}')", template)
@@ -191,7 +175,16 @@ template = re.sub(r"formatDate\('[^']+'\)", f"formatDate('{fetched_at}')", templ
 with open("index.html", "w") as f:
     f.write(template)
 
-open_issues = len([i for i in all_items if not i['is_pr'] and i['state'] == 'open'])
+# Also update template.html with latest JTBD (so next run builds on this)
+template2 = re.sub(
+    r'const jtbdItems = \[.*?\];',
+    f'const jtbdItems = {jtbd_json};',
+    template, flags=re.DOTALL
+)
+with open("template.html", "w") as f:
+    f.write(template2)
+
+open_issues_count = len([i for i in all_items if not i['is_pr'] and i['state'] == 'open'])
 jira_open = len([i for i in all_items if is_jira(i) and not i['is_pr'] and i['state'] == 'open'])
-print(f"\n✅ Done! {open_issues} open issues ({jira_open} Jira-specific), {len(voc_items)} VOC issues")
+print(f"\n✅ Done! {open_issues_count} open issues ({jira_open} Jira), JTBD updated")
 print(f"Fetched at: {fetched_at}")
