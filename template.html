@@ -368,7 +368,7 @@ function init() {
   document.getElementById('fetchedAt').textContent = 'Last fetched: ' + formatDate('2026-05-28T04:23:57.957099+00:00');
   updateStats();
   applyFilters();
-  initToolsTab(); // tools is default first tab
+  // initToolsTab called via DOMContentLoaded below (tools div is after this script)
 }
 
 // ═══════════════════════════════════════════════════
@@ -933,7 +933,7 @@ function initToolsTab() {
 </script>
 
 
-  <!-- Tools Tab -->
+  <!-- Tools Tab - must be before the DOMContentLoaded init call below -->
   <div id="tab-tools" class="tab-pane active" style="padding:20px;">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <div id="tools-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
@@ -944,5 +944,15 @@ function initToolsTab() {
     <div id="toolsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;"></div>
   </div>
 
+<script>
+// Tools div is now in DOM - safe to initialize
+document.addEventListener('DOMContentLoaded', function() {
+  initToolsTab();
+});
+// Also call immediately in case DOMContentLoaded already fired
+if (document.readyState !== 'loading') {
+  initToolsTab();
+}
+</script>
 </body>
 </html>
