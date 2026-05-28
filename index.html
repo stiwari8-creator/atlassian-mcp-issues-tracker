@@ -201,6 +201,7 @@
   .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
 
   .tab-pane { display: none; }
+  #tab-voc .issue-item { cursor: pointer; }
   .tab-pane.active { display: block; }
 
   /* Responsive */
@@ -229,6 +230,7 @@
     <div class="tab active" onclick="switchTab('issues')">📋 Issues &amp; PRs</div>
     <div class="tab" onclick="switchTab('changelog')">🔄 Changelog</div>
     <div class="tab" onclick="switchTab('analytics')">📊 Analytics</div>
+    <div class="tab" onclick="switchTab('voc')">🏢 VOC <span style="background:#d29922;color:#000;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;">8</span></div>
   </div>
 
   <!-- ISSUES TAB -->
@@ -311,6 +313,22 @@
   <!-- ANALYTICS TAB -->
   <div class="tab-pane" id="tab-analytics">
     <div id="analyticsContent" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"></div>
+  </div>
+
+
+  <!-- VOC TAB -->
+  <div class="tab-pane" id="tab-voc">
+    <div style="margin-bottom:20px;">
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:6px;">🏢 Enterprise VOC Issues</h2>
+      <p style="color:var(--text-muted);font-size:13px;">Customer-reported issues from the <code>production.customer_360.enterprise_voc</code> Socrates table, filtered for MCP-related requests. Each row shows how many enterprise customers have raised the same issue.</p>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat-card open"><div class="value" id="voc-stat-open">—</div><div class="label">Open VOC Issues</div></div>
+      <div class="stat-card total"><div class="value" id="voc-stat-customers">—</div><div class="label">Affected Customers</div></div>
+      <div class="stat-card prs"><div class="value" id="voc-stat-roadmap">—</div><div class="label">On Roadmap</div></div>
+      <div class="stat-card closed"><div class="value" id="voc-stat-closed">—</div><div class="label">Resolved</div></div>
+    </div>
+    <div class="issues-list" id="vocList" style="border-radius:var(--radius);border:1px solid var(--border);"></div>
   </div>
 
 </div>
@@ -832,13 +850,83 @@ function toggleJiraMode() {
   renderAnalytics();
 }
 
+
+// ═══════════════════════════════════════════════════
+// VOC DATA & RENDERING
+// ═══════════════════════════════════════════════════
+const vocItems = [{"issue_id": "ENT-3864", "summary": "Allow MCP server domains to be allowed for specific site", "description": "From ECO-1410: At the moment, when domains are allowed in organization, they are by default allowed for all the sites in the org. It would be great if admins can control which site can be connected.", "priority": "Minor", "created": "2026-05-01", "updated": "2026-05-26", "resolution_date": null, "status": "Pending Review", "status_display": "Open", "interested_teams": "Enterprise Support Engineers", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3864", "customers": ["natwest.com", "fanniemae.com", "amfam.com", "netskope.com"], "customer_count": 4}, {"issue_id": "ENT-3688", "summary": "Restrict Data Access for MCP-Integrated Systems", "description": "There is no direct way to restrict data access for different MCP-integrated clients at a granular level.", "priority": "Minor", "created": "2026-02-20", "updated": "2026-05-26", "resolution_date": null, "status": "Pending Review", "status_display": "Open", "interested_teams": "Enterprise Support Engineers", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3688", "customers": ["integralads.com", "aboutyou.com", "gsk.com", "auroraer.com"], "customer_count": 4}, {"issue_id": "ENT-3856", "summary": "Ability to configure MCP server permissions per site", "description": "Customers with multiple Jira or Confluence sites under a single org need the ability to apply different MCP permission postures per site.", "priority": "Minor", "created": "2026-04-29", "updated": "2026-05-26", "resolution_date": null, "status": "Pending Review", "status_display": "Open", "interested_teams": "missing", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3856", "customers": ["woolworths.com.au", "natwest.com", "auroraer.com"], "customer_count": 3}, {"issue_id": "ENT-3809", "summary": "Rovo | Policy to block MCP access for external users", "description": "The Rovo MCP server should have a constraint (similar to the API) to completely block external user access.", "priority": "Minor", "created": "2026-04-09", "updated": "2026-05-26", "resolution_date": null, "status": "Roadmap (Internal Only)", "status_display": "Open", "interested_teams": "missing", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3809", "customers": ["redhat.com", "accenture.com", "ibm.com"], "customer_count": 3}, {"issue_id": "ENT-3860", "summary": "Atlassian MCP server should support connecting to multiple sites simultaneously", "description": "Problem: Currently, the Atlassian MCP server only supports connecting to a single site at a time.", "priority": "Minor", "created": "2026-04-30", "updated": "2026-05-26", "resolution_date": null, "status": "Roadmap (Internal Only)", "status_display": "Open", "interested_teams": "Customer Success Managers", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3860", "customers": ["canva.com"], "customer_count": 1}, {"issue_id": "ENT-3835", "summary": "Allow file upload via Rovo MCP server into Confluence and Jira", "description": "Currently MCP does not offer a native way to upload attachments into Confluence/Jira.", "priority": "Minor", "created": "2026-04-20", "updated": "2026-05-20", "resolution_date": null, "status": "Pending Review", "status_display": "Open", "interested_teams": "Enterprise Support Engineers", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3835", "customers": ["msci.com"], "customer_count": 1}, {"issue_id": "ENT-3825", "summary": "[Reddit] Public API access for agents", "description": "Reddit is creating an internal IT agent with Rovo and Public API access to agents is a key blocker for orchestration.", "priority": "Minor", "created": "2026-04-13", "updated": "2026-05-20", "resolution_date": null, "status": "Actively Investigating", "status_display": "Open", "interested_teams": "missing", "product": "Rovo / AI", "url": "https://hello.atlassian.net/browse/ENT-3825", "customers": ["reddit.com"], "customer_count": 1}, {"issue_id": "VOC-10499", "summary": "Eaton \u2013 Rovo MCP Server: Custom field support in Jira tools (Acceptance Criteria)", "description": "Eaton is using the Rovo MCP Server with GitHub Copilot in VS Code to read from and write to Jira. Custom fields \u2014 specifically Acceptance Criteria \u2014 are not writable through the standard tools.", "priority": "Minor", "created": "2026-05-23", "updated": "2026-05-27", "resolution_date": null, "status": "2. Under Review", "status_display": "Open", "interested_teams": "missing", "product": "Rovo / AI", "url": "https://hello.jira.atlassian.cloud/browse/VOC-10499", "customers": ["eaton.com"], "customer_count": 1}];
+
+function renderVOC() {
+  const open = vocItems.filter(v => v.status_display === 'Open').length;
+  const closed = vocItems.filter(v => v.status_display === 'Closed').length;
+  const roadmap = vocItems.filter(v => v.status && v.status.toLowerCase().includes('roadmap')).length;
+  const totalCustomers = [...new Set(vocItems.flatMap(v => v.customers))].length;
+
+  document.getElementById('voc-stat-open').textContent = open;
+  document.getElementById('voc-stat-customers').textContent = totalCustomers;
+  document.getElementById('voc-stat-roadmap').textContent = roadmap;
+  document.getElementById('voc-stat-closed').textContent = closed;
+
+  const statusColor = (s) => {
+    if (!s) return 'var(--text-muted)';
+    const sl = s.toLowerCase();
+    if (sl.includes('roadmap')) return 'var(--green)';
+    if (sl.includes('investigating') || sl.includes('review')) return 'var(--yellow)';
+    if (sl.includes('closed') || sl.includes('resolved')) return 'var(--text-muted)';
+    return 'var(--accent)';
+  };
+
+  const priorityColor = (p) => {
+    if (!p) return 'var(--text-muted)';
+    const pl = p.toLowerCase();
+    if (pl === 'blocker') return 'var(--red)';
+    if (pl === 'critical') return '#ff6b35';
+    if (pl === 'major') return 'var(--yellow)';
+    return 'var(--text-muted)';
+  };
+
+  document.getElementById('vocList').innerHTML = vocItems.map(v => `
+    <div class="issue-item" onclick="window.open('${v.url}','_blank')" style="flex-direction:column;gap:10px;cursor:pointer;">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;margin-top:3px;">
+          <svg width="16" height="16" viewBox="0 0 16 16"><path fill="var(--accent)" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
+            <span style="font-weight:600;color:var(--text);line-height:1.4;flex:1;">${escHtml(v.summary)}</span>
+            <span style="color:var(--text-muted);font-size:12px;flex-shrink:0;">${v.issue_id}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:8px;">
+            <span style="color:${statusColor(v.status)};font-weight:500;">● ${escHtml(v.status || 'Unknown')}</span>
+            <span style="color:${priorityColor(v.priority)};">⚡ ${escHtml(v.priority || '—')}</span>
+            <span style="color:var(--text-muted);">📅 created ${v.created}</span>
+            <span style="color:${isRecent(v.updated + 'T00:00:00Z') ? 'var(--yellow)' : 'var(--text-muted)'};">✏️ updated ${v.updated}</span>
+            ${v.resolution_date ? `<span style="color:var(--green);">✅ resolved ${v.resolution_date}</span>` : ''}
+          </div>
+          ${v.description ? `<div style="font-size:12px;color:var(--text-muted);line-height:1.5;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin-bottom:8px;">${escHtml(v.description)}${v.description.length >= 300 ? '…' : ''}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--text-muted);">Customers (${v.customer_count}):</span>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                ${v.customers.map(c => `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--text);">${escHtml(c)}</span>`).join('')}
+              </div>
+            </div>
+            ${v.interested_teams && v.interested_teams !== 'missing' ? `<span style="font-size:12px;color:var(--text-muted);">👥 ${escHtml(v.interested_teams)}</span>` : ''}
+            <a href="${v.url}" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;font-size:12px;color:var(--accent);">View in Jira ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
 // ═══════════════════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════════════════
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  const tabs = ['issues', 'changelog', 'analytics'];
+  const tabs = ['issues', 'changelog', 'analytics', 'voc'];
+  if (name === 'voc') renderVOC();
   const idx = tabs.indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
