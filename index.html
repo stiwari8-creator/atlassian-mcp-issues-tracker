@@ -5,41 +5,45 @@
 <script>
 // Password gate
 (function() {
-  if (sessionStorage.getItem('mcp_auth') !== '1') {
-    document.addEventListener('DOMContentLoaded', function() {
-      document.body.style.display = 'none';
-    });
-    // Show gate overlay
-    const gate = document.createElement('div');
-    gate.id = 'auth-gate';
-    gate.style.cssText = 'position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
-    gate.innerHTML = `
-      <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:40px;max-width:380px;width:90%;text-align:center;">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="#0052cc" style="margin-bottom:16px"><path d="M11.53 2.05a.5.5 0 0 1 .94 0l2.7 7.45h7.83a.5.5 0 0 1 .3.9l-6.34 4.6 2.42 7.45a.5.5 0 0 1-.77.56L12 18.51l-6.61 4.5a.5.5 0 0 1-.77-.56l2.42-7.45L.7 10.4a.5.5 0 0 1 .3-.9h7.83z"/></svg>
-        <h1 style="font-size:20px;font-weight:600;margin-bottom:8px;color:#e6edf3;">MCP Issues Tracker</h1>
-        <p style="color:#7d8590;font-size:14px;margin-bottom:24px;">Atlassian internal use only.<br>Enter the access password to continue.</p>
-        <input id="gate-token" type="text" placeholder="GitHub token (for Refresh)" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px 14px;color:#e6edf3;font-size:13px;outline:none;margin-bottom:8px;text-align:center;" >
-        <input id="gate-pw" type="password" placeholder="Password" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px 14px;color:#e6edf3;font-size:15px;outline:none;margin-bottom:12px;text-align:center;letter-spacing:3px;" onkeydown="if(event.key==='Enter')window._checkPw()">
-        <button onclick="window._checkPw()" style="width:100%;background:#0052cc;border:none;border-radius:6px;padding:11px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Access Dashboard →</button>
-        <div id="gate-err" style="color:#f85149;font-size:13px;margin-top:10px;display:none;">Incorrect password. Try again.</div>
-      </div>`;
-    document.documentElement.appendChild(gate);
-    window._checkPw = function() {
-      const pw = document.getElementById('gate-pw').value;
-      if (pw === atob('YXRsYXNzaWFuLW1jcA==')) {
-        const ghToken = document.getElementById('gate-token') ? document.getElementById('gate-token').value.trim() : '';
-        if (ghToken) sessionStorage.setItem('gh_token', ghToken);
-        sessionStorage.setItem('mcp_auth', '1');
-        gate.remove();
-        document.body.style.display = '';
-      } else {
-        document.getElementById('gate-err').style.display = 'block';
-        document.getElementById('gate-pw').value = '';
-        document.getElementById('gate-pw').focus();
-      }
-    };
-    document.getElementById('gate-pw') && document.getElementById('gate-pw').focus();
+  if (sessionStorage.getItem('mcp_auth') === '1') {
+    // Already authenticated - do nothing, body stays visible
+    return;
   }
+  // Not authenticated - show gate overlay, hide body
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.style.display = 'none';
+  });
+  const gate = document.createElement('div');
+  gate.id = 'auth-gate';
+  gate.style.cssText = 'position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;';
+  gate.innerHTML = `
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:40px;max-width:380px;width:90%;text-align:center;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="#0052cc" style="margin-bottom:16px"><path d="M11.53 2.05a.5.5 0 0 1 .94 0l2.7 7.45h7.83a.5.5 0 0 1 .3.9l-6.34 4.6 2.42 7.45a.5.5 0 0 1-.77.56L12 18.51l-6.61 4.5a.5.5 0 0 1-.77-.56l2.42-7.45L.7 10.4a.5.5 0 0 1 .3-.9h7.83z"/></svg>
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:8px;color:#e6edf3;">MCP Issues Tracker</h1>
+      <p style="color:#7d8590;font-size:14px;margin-bottom:24px;">Atlassian internal use only.<br>Enter the access password to continue.</p>
+      <input id="gate-token" type="text" placeholder="GitHub token (optional, for Refresh)" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px 14px;color:#e6edf3;font-size:13px;outline:none;margin-bottom:8px;text-align:center;">
+      <input id="gate-pw" type="password" placeholder="Password" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px 14px;color:#e6edf3;font-size:15px;outline:none;margin-bottom:12px;text-align:center;letter-spacing:3px;" onkeydown="if(event.key==='Enter')window._checkPw()">
+      <button onclick="window._checkPw()" style="width:100%;background:#0052cc;border:none;border-radius:6px;padding:11px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Access Dashboard →</button>
+      <div id="gate-err" style="color:#f85149;font-size:13px;margin-top:10px;display:none;">Incorrect password. Try again.</div>
+    </div>`;
+  document.addEventListener('DOMContentLoaded', function() {
+    document.documentElement.appendChild(gate);
+    document.getElementById('gate-pw') && document.getElementById('gate-pw').focus();
+  });
+  window._checkPw = function() {
+    const pw = document.getElementById('gate-pw').value;
+    if (pw === atob('YXRsYXNzaWFuLW1jcA==')) {
+      const ghToken = document.getElementById('gate-token').value.trim();
+      if (ghToken) sessionStorage.setItem('gh_token', ghToken);
+      sessionStorage.setItem('mcp_auth', '1');
+      gate.remove();
+      document.body.style.display = '';
+    } else {
+      document.getElementById('gate-err').style.display = 'block';
+      document.getElementById('gate-pw').value = '';
+      document.getElementById('gate-pw').focus();
+    }
+  };
 })();
 </script>
 
