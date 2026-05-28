@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
 
 jobs:
   update-dashboard:
@@ -21,9 +20,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Fetch latest issues and rebuild dashboard
+      - name: Fetch latest GitHub issues + VOC data and rebuild dashboard
         env:
           GITHUB_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+          SOCRATES_TOKEN: ${{ secrets.SOCRATES_TOKEN }}
         run: python fetch_and_build.py
 
       - name: Commit and push updated dashboard
