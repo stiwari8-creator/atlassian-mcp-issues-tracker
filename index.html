@@ -759,6 +759,10 @@ function renderVOC() {
             <span style="font-weight:600;color:var(--text);line-height:1.4;flex:1;">${escHtml(v.summary)}</span>
             <span style="color:var(--text-muted);font-size:12px;flex-shrink:0;">${v.issue_id}</span>
           </div>
+          ${VOC_TO_GH[v.issue_id] ? `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:6px 10px;background:#1f3a5e22;border:1px solid #388bfd44;border-radius:4px;">
+            <span style="font-size:11px;font-weight:600;color:#388bfd;white-space:nowrap;">⬡ Also on GitHub:</span>
+            ${VOC_TO_GH[v.issue_id].map(g => `<a href="${g.url}" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;background:#1f3a5e;border:1px solid #388bfd;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;color:#388bfd;text-decoration:none;">#${g.number} ${escHtml(g.title.slice(0,40))}${g.title.length>40?'…':''}</a>`).join('')}
+          </div>` : ''}
           <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:8px;">
             <span style="color:${statusColor(v.status)};font-weight:500;">● ${escHtml(v.status || 'Unknown')}</span>
             <span style="color:${priorityColor(v.priority)};">⚡ ${escHtml(v.priority || '—')}</span>
@@ -775,7 +779,6 @@ function renderVOC() {
               </div>
             </div>
             ${v.interested_teams && v.interested_teams !== 'missing' ? `<span style="font-size:12px;color:var(--text-muted);">👥 ${escHtml(v.interested_teams)}</span>` : ''}
-${VOC_TO_GH[v.issue_id] ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${VOC_TO_GH[v.issue_id].map(g => `<a href="${g.url}" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;background:#1f3a5e;border:1px solid #388bfd;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;color:#388bfd;text-decoration:none;">⬡ GH #${g.number}</a>`).join('')}</div>` : ''}
             <a href="${v.url}" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;font-size:12px;color:var(--accent);">View in Jira ↗</a>
           </div>
         </div>
