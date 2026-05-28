@@ -155,17 +155,19 @@ fetched_at = datetime.now(timezone.utc).isoformat()
 
 # Replace GitHub data
 safe_json = json.dumps(all_items, ensure_ascii=True)
+repl_data = '<script type="application/json" id="__data__">' + safe_json + '</script>'
 template = re.sub(
     r'<script type="application/json" id="__data__">.*?</script>',
-    f'<script type="application/json" id="__data__">{safe_json}</script>',
+    lambda m: repl_data,
     template, flags=re.DOTALL
 )
 
 # Replace JTBD data
 jtbd_json = json.dumps(jtbd_items, ensure_ascii=True)
+repl_jtbd = 'const jtbdItems = ' + jtbd_json + ';'
 template = re.sub(
     r'const jtbdItems = \[.*?\];',
-    f'const jtbdItems = {jtbd_json};',
+    lambda m: repl_jtbd,
     template, flags=re.DOTALL
 )
 
