@@ -351,8 +351,6 @@ function getVisibleItems() {
 function init() {
   document.getElementById('fetchedAt').textContent = 'Last fetched: ' + formatDate('2026-05-28T04:23:57.957099+00:00');
   updateStats();
-  renderLabelFilters();
-  renderLabelChart();
   applyFilters();
 }
 
@@ -429,7 +427,6 @@ function setStateFilter(state) {
 
 function setLabelFilter(label) {
   labelFilter = label;
-  renderLabelFilters();
   currentPage = 1;
   applyFilters();
 }
@@ -666,9 +663,7 @@ async function refreshData() {
 
     document.getElementById('fetchedAt').textContent = 'Last fetched: ' + new Date().toLocaleString();
     updateStats();
-    renderLabelFilters();
-    renderLabelChart();
-    applyFilters();
+        applyFilters();
     renderChangelog();
     renderAnalytics();
 
@@ -691,8 +686,6 @@ function toggleJiraMode() {
   btn.style.background = jiraOnlyMode ? '#0052cc' : '#444';
   currentPage = 1;
   updateStats();
-  renderLabelFilters();
-  renderLabelChart();
   applyFilters();
   renderAnalytics();
 }
