@@ -381,38 +381,9 @@ function getLabelStyle(color) {
   return `background:${hex}22; color:${hex}; border:1px solid ${hex}55;`;
 }
 
-function renderLabelFilters() {
-  const labelMap = {};
-  getVisibleItems().forEach(item => item.labels.forEach(l => {
-    if (!labelMap[l.name]) labelMap[l.name] = {...l, count: 0};
-    labelMap[l.name].count++;
-  }));
-  const labels = Object.values(labelMap).sort((a,b) => b.count - a.count);
-  const container = document.getElementById('label-filters');
-  container.innerHTML = `<button class="filter-btn ${!labelFilter ? 'active' : ''}" onclick="setLabelFilter(null)">
-    <span>All Labels</span><span class="filter-count">${getVisibleItems().length}</span>
-  </button>` + labels.map(l => `
-    <button class="filter-btn ${labelFilter === l.name ? 'active' : ''}" onclick="setLabelFilter('${l.name}')">
-      <span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#${l.color};display:inline-block;"></span>${l.name}</span>
-      <span class="filter-count">${l.count}</span>
-    </button>`).join('');
-}
+function renderLabelFilters() { /* removed */ }
 
-function renderLabelChart() {
-  const labelMap = {};
-  getVisibleItems().filter(i => !i.is_pr).forEach(item => item.labels.forEach(l => {
-    if (!labelMap[l.name]) labelMap[l.name] = {...l, count: 0};
-    labelMap[l.name].count++;
-  }));
-  const labels = Object.values(labelMap).sort((a,b) => b.count - a.count).slice(0, 8);
-  const max = labels[0]?.count || 1;
-  document.getElementById('label-chart').innerHTML = labels.map(l => `
-    <div class="chart-bar-row">
-      <div class="chart-bar-label" title="${l.name}">${l.name}</div>
-      <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(l.count/max*100).toFixed(1)}%;background:#${l.color};"></div></div>
-      <div class="chart-bar-num">${l.count}</div>
-    </div>`).join('');
-}
+function renderLabelChart() { /* removed */ }
 
 // ═══════════════════════════════════════════════════
 // FILTERING & SORTING
