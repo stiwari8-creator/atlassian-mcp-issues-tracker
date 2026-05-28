@@ -155,34 +155,41 @@ fetched_at = datetime.now(timezone.utc).isoformat()
 
 # Replace GitHub data
 safe_json = json.dumps(all_items, ensure_ascii=True)
-repl_data = '<script type="application/json" id="__data__">' + safe_json + '</script>'
-template = re.sub(
-    r'<script type="application/json" id="__data__">.*?</script>',
-    lambda m: repl_data,
-    template, flags=re.DOTALL
-)
+# Replace __data__ block safely without regex
+import re as _re
+_data_start = '<script type="application/json" id="__data__">'
+_data_end = '</script>'
+_s = template.find(_data_start)
+_e = template.find(_data_end, _s) + len(_data_end)
+if _s >= 0 and _e > _s:
+    template = template[:_s] + _data_start + safe_json + _data_end + template[_e:]
 
 # Replace JTBD data
 jtbd_json = json.dumps(jtbd_items, ensure_ascii=True)
+# Replace jtbdItems safely without regex
 repl_jtbd = 'const jtbdItems = ' + jtbd_json + ';'
-template = re.sub(
-    r'const jtbdItems = \[.*?\];',
-    lambda m: repl_jtbd,
-    template, flags=re.DOTALL
-)
+_ji_start = template.find('const jtbdItems = ')
+_ji_end = template.find(';', _ji_start) + 1
+if _ji_start >= 0:
+    template = template[:_ji_start] + repl_jtbd + template[_ji_end:]
 
 # Replace timestamp
-template = re.sub(r"formatDate\('[^']+'\)", f"formatDate('{fetched_at}')", template)
+# Replace timestamp safely
+old_ts = re.search(r"formatDate\('[^']+'\)", template)
+if old_ts:
+    template = template.replace(old_ts.group(0), f"formatDate('{fetched_at}')", 1)
 
 with open("index.html", "w") as f:
     f.write(template)
 
 # Also update template.html with latest JTBD (so next run builds on this)
-template2 = re.sub(
-    r'const jtbdItems = \[.*?\];',
-    f'const jtbdItems = {jtbd_json};',
-    template, flags=re.DOTALL
-)
+# Replace jtbdItems in template2 safely
+_ji2_start = template.find('const jtbdItems = ')
+_ji2_end = template.find(';', _ji2_start) + 1
+if _ji2_start >= 0:
+    template2 = template[:_ji2_start] + repl_jtbd + template[_ji2_end:]
+else:
+    template2 = template
 with open("template.html", "w") as f:
     f.write(template2)
 
