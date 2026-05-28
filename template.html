@@ -224,8 +224,8 @@
 <div class="container">
 
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('issues')">📋 GitHub Issues <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">atlassian/atlassian-mcp-server</span></div>
-    <div class="tab" onclick="switchTab('tools')">🔧 MCP Tools <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">support.atlassian.com</span></div>
+    <div class="tab active" onclick="switchTab('tools')">🔧 MCP Tools <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">support.atlassian.com</span></div>
+    <div class="tab" onclick="switchTab('issues')">📋 GitHub Issues <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">atlassian/atlassian-mcp-server</span></div>
     <div class="tab" onclick="switchTab('voc')">🏢 Enterprise VOC <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">production.customer_360.enterprise_voc</span></div>
     <div class="tab" onclick="switchTab('jtbd')">🎯 Jobs To Be Done <span style="background:#a371f7;color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;">12</span></div>
   </div>
@@ -368,6 +368,7 @@ function init() {
   document.getElementById('fetchedAt').textContent = 'Last fetched: ' + formatDate('2026-05-28T04:23:57.957099+00:00');
   updateStats();
   applyFilters();
+  initToolsTab(); // tools is default first tab
 }
 
 // ═══════════════════════════════════════════════════
@@ -822,7 +823,7 @@ function renderVOC() {
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  const tabs = ['issues', 'tools', 'voc', 'jtbd'];
+  const tabs = ['tools', 'issues', 'voc', 'jtbd'];
   if (name === 'voc') renderVOC();
   if (name === 'jtbd') renderJTBD();
   if (name === 'tools') initToolsTab();
