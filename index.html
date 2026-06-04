@@ -950,13 +950,14 @@ function initToolsTab() {
   </div>
 
 <script>
-// Tools div is now in DOM - safe to initialize
-document.addEventListener('DOMContentLoaded', function() {
-  initToolsTab();
-});
-// Also call immediately in case DOMContentLoaded already fired
-if (document.readyState !== 'loading') {
-  initToolsTab();
+// Tools div is now in DOM - only initialize if already authenticated (returning visitor)
+// If not authenticated, _checkPw() will call initToolsTab() after gate clears
+if (sessionStorage.getItem('mcp_auth') === '1') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { init(); initToolsTab(); });
+  } else {
+    init(); initToolsTab();
+  }
 }
 </script>
 </body>
