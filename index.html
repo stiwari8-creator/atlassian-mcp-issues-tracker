@@ -38,6 +38,8 @@
       sessionStorage.setItem('mcp_auth', '1');
       gate.remove();
       document.body.style.display = '';
+      init();
+      initToolsTab();
     } else {
       document.getElementById('gate-err').style.display = 'block';
       document.getElementById('gate-pw').value = '';
@@ -865,7 +867,7 @@ function timeAgo(iso) {
   return y + ' year' + (y > 1 ? 's' : '') + ' ago';
 }
 
-init();
+if (sessionStorage.getItem('mcp_auth') === '1') { init(); }
 
 
 // ═══════════ TOOLS TAB ═══════════
