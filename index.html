@@ -38,8 +38,10 @@
       sessionStorage.setItem('mcp_auth', '1');
       gate.remove();
       document.body.style.display = '';
-      init();
-      initToolsTab();
+      try { init(); } catch(e) { console.error('init() failed:', e); }
+      setTimeout(function() {
+        try { initToolsTab(); } catch(e) { console.error('initToolsTab() failed:', e); }
+      }, 100);
     } else {
       document.getElementById('gate-err').style.display = 'block';
       document.getElementById('gate-pw').value = '';
