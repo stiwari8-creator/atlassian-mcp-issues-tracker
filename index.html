@@ -40,8 +40,8 @@
       document.body.style.display = '';
       try { init(); } catch(e) { console.error('init() failed:', e); }
       setTimeout(function() {
-        try { initToolsTab(); } catch(e) { console.error('initToolsTab() failed:', e); }
-      }, 100);
+        try { switchTab('tools'); } catch(e) { console.error('switchTab failed:', e); }
+      }, 50);
     } else {
       document.getElementById('gate-err').style.display = 'block';
       document.getElementById('gate-pw').value = '';
