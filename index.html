@@ -38,9 +38,8 @@
       sessionStorage.setItem('mcp_auth', '1');
       gate.remove();
       document.body.style.display = '';
-      try { init(); } catch(e) { console.error('init() failed:', e); }
       setTimeout(function() {
-        try { switchTab('tools'); } catch(e) { console.error('switchTab failed:', e); }
+        try { _runApp(); } catch(e) { console.error('_runApp() failed:', e); }
       }, 50);
     } else {
       document.getElementById('gate-err').style.display = 'block';
@@ -869,7 +868,7 @@ function timeAgo(iso) {
   return y + ' year' + (y > 1 ? 's' : '') + ' ago';
 }
 
-if (sessionStorage.getItem('mcp_auth') === '1') { init(); }
+// init called after DOM ready - see script block after tab-tools div
 
 
 // ═══════════ TOOLS TAB ═══════════
@@ -952,15 +951,16 @@ function initToolsTab() {
   </div>
 
 <script>
-// Tools div is now in DOM - only initialize if already authenticated (returning visitor)
-// If not authenticated, _checkPw() will call initToolsTab() after gate clears
-if (sessionStorage.getItem('mcp_auth') === '1') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { init(); initToolsTab(); });
-  } else {
-    init(); initToolsTab();
-  }
+// Tab-tools div is now in DOM. Run init for both new and returning visitors.
+function _runApp() {
+  try { init(); } catch(e) { console.error('init() failed:', e); }
+  try { initToolsTab(); } catch(e) { console.error('initToolsTab() failed:', e); }
 }
+if (sessionStorage.getItem('mcp_auth') === '1') {
+  // Returning visitor - run immediately (DOM is ready)
+  _runApp();
+}
+// _checkPw() calls _runApp() for new visitors after password entry
 </script>
 </body>
 </html>
