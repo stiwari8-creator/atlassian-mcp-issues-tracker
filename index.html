@@ -912,18 +912,29 @@ const mcpTools = [
   {"name": "addTeamworkGraphContext",      "product": "Teamwork Graph", "category": "Write","type": "write","auth": "both", "description": "Add context or relationships to an object in the Teamwork Graph"}
 ];
 let activeToolProduct = 'all';
+let activeToolType = 'all';
 const PRODUCT_COLORS = {'Jira':'#0052cc','Confluence':'#0065ff','Compass':'#6554c0','JSM':'#de350b','Bitbucket':'#0747a6','Platform':'#00875a','Teamwork Graph':'#ff8b00'};
 const TYPE_COLORS = {'read':'#1a7f37','write':'#cf222e','both':'#9a6700'};
+
+function setToolTypeFilter(type) {
+  activeToolType = activeToolType === type ? 'all' : type;
+  renderToolsStats();
+  renderTools();
+}
 
 function renderToolsStats() {
   const reads  = mcpTools.filter(t=>t.type==='read').length;
   const writes = mcpTools.filter(t=>t.type==='write').length;
   const both   = mcpTools.filter(t=>t.type==='both').length;
+  const pillStyle = (type, bg, border, color) => {
+    const active = activeToolType === type;
+    return `background:${active ? border : bg};border:2px solid ${border};border-radius:6px;padding:5px 12px;font-size:13px;color:${active ? '#fff' : color};cursor:pointer;font-weight:${active ? '700' : '400'};transition:all 0.15s;user-select:none;`;
+  };
   document.getElementById('tools-stats').innerHTML = `
     <span style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:13px;">🔧 <strong>${mcpTools.length}</strong> tools</span>
-    <span style="background:#0e2d0e;border:1px solid #1a7f37;border-radius:6px;padding:5px 12px;font-size:13px;color:#3fb950;">📖 <strong>${reads}</strong> read</span>
-    <span style="background:#2d0e0e;border:1px solid #cf222e;border-radius:6px;padding:5px 12px;font-size:13px;color:#f85149;">✏️ <strong>${writes}</strong> write</span>
-    <span style="background:#2d1f00;border:1px solid #9a6700;border-radius:6px;padding:5px 12px;font-size:13px;color:#d4a72c;">⚡ <strong>${both}</strong> read+write</span>
+    <span onclick="setToolTypeFilter('read')" style="${pillStyle('read','#0e2d0e','#1a7f37','#3fb950')}">📖 <strong>${reads}</strong> read</span>
+    <span onclick="setToolTypeFilter('write')" style="${pillStyle('write','#2d0e0e','#cf222e','#f85149')}">✏️ <strong>${writes}</strong> write</span>
+    <span onclick="setToolTypeFilter('both')" style="${pillStyle('both','#2d1f00','#9a6700','#d4a72c')}">⚡ <strong>${both}</strong> read+write</span>
   `;
 }
 
@@ -943,8 +954,9 @@ function renderTools() {
   const q=(document.getElementById('toolsSearch')?.value||'').toLowerCase();
   const filtered=mcpTools.filter(t=>{
     const mp=activeToolProduct==='all'||t.product===activeToolProduct;
+    const mt=activeToolType==='all'||t.type===activeToolType;
     const ms=!q||t.name.toLowerCase().includes(q)||t.description.toLowerCase().includes(q)||t.product.toLowerCase().includes(q);
-    return mp&&ms;
+    return mp&&mt&&ms;
   });
   const typeIcon={read:'📖',write:'✏️',both:'⚡'};
   document.getElementById('toolsList').innerHTML=filtered.map(t=>{
