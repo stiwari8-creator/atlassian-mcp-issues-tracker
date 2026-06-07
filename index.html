@@ -882,44 +882,34 @@ init();
 
 
 // ═══════════ TOOLS TAB ═══════════
+// Source: https://support.atlassian.com/atlassian-rovo-mcp-server/docs/supported-tools/
+// All tool names verified against official Atlassian documentation (June 2026)
 const mcpTools = [
-  {"name": "atlassianUserInfo", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Get current authenticated user info from Atlassian"},
-  {"name": "getAccessibleAtlassianResources", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Get cloud IDs and site URLs for all accessible Atlassian resources"},
-  {"name": "search", "product": "Platform", "category": "Search", "type": "read", "auth": "both", "description": "Natural language Rovo search across all Atlassian products"},
-  {"name": "fetch", "product": "Platform", "category": "Core", "type": "read", "auth": "both", "description": "Fetch any Atlassian resource by ARI (Atlassian Resource Identifier)"},
-  {"name": "searchJiraIssuesUsingJql", "product": "Jira", "category": "Search", "type": "read", "auth": "both", "description": "Search Jira issues using JQL (Jira Query Language)"},
-  {"name": "getJiraIssue", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get details of a specific Jira issue by ID or key"},
-  {"name": "getVisibleJiraProjects", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get Jira projects visible to the current user"},
-  {"name": "lookupJiraAccountId", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Look up a Jira user account ID by name or email"},
-  {"name": "getJiraIssueTransitions", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get available workflow transitions for a Jira issue"},
-  {"name": "getJiraBoardsForProject", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all boards associated with a Jira project"},
-  {"name": "getJiraSprintsForBoard", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all sprints for a given Jira board"},
-  {"name": "getJiraIssueLinkTypes", "product": "Jira", "category": "Read", "type": "read", "auth": "both", "description": "Get all available issue link types for a Jira site"},
-  {"name": "createJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Create a new Jira issue"},
-  {"name": "editJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Update fields on an existing Jira issue"},
-  {"name": "transitionJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Transition a Jira issue to a new workflow status"},
-  {"name": "addCommentToJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Add a comment to a Jira issue"},
-  {"name": "addWorklogToJiraIssue", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Log time worked on a Jira issue"},
-  {"name": "createJiraIssueLink", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Create a link between two Jira issues (e.g. blocks, duplicates)"},
-  {"name": "bulkCreateJiraIssues", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Bulk create multiple Jira issues in one operation"},
-  {"name": "bulkMoveJiraIssuesToEpic", "product": "Jira", "category": "Write", "type": "write", "auth": "both", "description": "Move multiple Jira issues to an epic in bulk"},
-  {"name": "getContextForJiraIssue", "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get full context for a Jira issue including linked PRs, commits, branches, and hierarchy"},
-  {"name": "getRelatedReposForJiraIssue", "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get related repositories for a Jira issue with confidence scores"},
-  {"name": "searchCompassComponents", "product": "Compass", "category": "Search", "type": "read", "auth": "both", "description": "Search Compass components by name, type, or owner"},
-  {"name": "getCompassComponent", "product": "Compass", "category": "Read", "type": "read", "auth": "both", "description": "Get details of a specific Compass component"},
-  {"name": "getCompassComponentEvents", "product": "Compass", "category": "Read", "type": "read", "auth": "both", "description": "Get activity events (deployments, alerts) for a Compass component"},
-  {"name": "createCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Create a new Compass component (service, library, app)"},
-  {"name": "updateCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Update metadata or relationships of a Compass component"},
-  {"name": "deleteCompassComponent", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Delete a Compass component"},
-  {"name": "bulkCreateCompassComponents", "product": "Compass", "category": "Write", "type": "write", "auth": "both", "description": "Bulk create Compass components from CSV/JSON"},
-  {"name": "bitbucketWorkspace", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List or get Bitbucket workspace details"},
-  {"name": "bitbucketRepository", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List repos, get repo info, default reviewers, or commit reports"},
-  {"name": "bitbucketPullRequest", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "Create, get, list, merge, approve, comment on, or diff pull requests"},
-  {"name": "bitbucketRepoContent", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "Browse repo content, manage branches, commit files"},
-  {"name": "bitbucketPipeline", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "List, run, get pipeline steps and logs"},
-  {"name": "bitbucketDeployment", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "List or get Bitbucket deployment details"},
-  {"name": "bitbucketEnvironment", "product": "Bitbucket", "category": "Both", "type": "both", "auth": "both", "description": "List, create, update, delete Bitbucket environments"},
-  {"name": "bitbucketUser", "product": "Bitbucket", "category": "Read", "type": "read", "auth": "both", "description": "Get current Bitbucket user information"}
+  // ── Platform / Shared ──
+  {"name": "atlassianUserInfo",            "product": "Platform", "category": "Core",   "type": "read",  "auth": "both",  "description": "Get current authenticated user info from Atlassian"},
+  {"name": "getAccessibleAtlassianResources","product": "Platform", "category": "Core", "type": "read",  "auth": "both",  "description": "Get cloud IDs and site URLs for all accessible Atlassian resources"},
+  {"name": "searchAtlassian",              "product": "Platform", "category": "Search", "type": "read",  "auth": "both",  "description": "Natural language search across all Atlassian products"},
+  {"name": "fetchAtlassian",               "product": "Platform", "category": "Core",   "type": "read",  "auth": "both",  "description": "Fetch any Atlassian resource by URL or ARI"},
+  // ── Jira Read ──
+  {"name": "searchJiraIssuesUsingJql",     "product": "Jira",     "category": "Search", "type": "read",  "auth": "both",  "description": "Search Jira issues using JQL (Jira Query Language)"},
+  {"name": "getJiraIssue",                 "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Get details of a specific Jira issue by ID or key"},
+  {"name": "getVisibleJiraProjects",       "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Get Jira projects visible to the current user"},
+  {"name": "lookupJiraAccountId",          "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Look up a Jira user account ID by name or email"},
+  {"name": "getTransitionsForJiraIssue",   "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Get available workflow transitions for a Jira issue"},
+  {"name": "getIssueLinkTypes",            "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Get all available issue link types for a Jira site"},
+  {"name": "getJiraIssueRemoteIssueLinks", "product": "Jira",     "category": "Read",   "type": "read",  "auth": "both",  "description": "Get remote issue links attached to a Jira issue"},
+  {"name": "getJiraIssueTypeMetaWithFields","product": "Jira",    "category": "Read",   "type": "read",  "auth": "both",  "description": "Get issue type metadata including available fields for creating issues"},
+  {"name": "getJiraProjectIssueTypesMetadata","product": "Jira",  "category": "Read",   "type": "read",  "auth": "both",  "description": "Get issue type metadata for a specific Jira project"},
+  // ── Jira Write ──
+  {"name": "createJiraIssue",              "product": "Jira",     "category": "Write",  "type": "write", "auth": "both",  "description": "Create a new Jira issue"},
+  {"name": "editJiraIssue",                "product": "Jira",     "category": "Write",  "type": "write", "auth": "both",  "description": "Update fields on an existing Jira issue"},
+  {"name": "transitionJiraIssue",          "product": "Jira",     "category": "Write",  "type": "write", "auth": "both",  "description": "Transition a Jira issue to a new workflow status"},
+  {"name": "addCommentToJiraIssue",        "product": "Jira",     "category": "Write",  "type": "write", "auth": "both",  "description": "Add a comment to a Jira issue"},
+  {"name": "addWorklogToJiraIssue",        "product": "Jira",     "category": "Write",  "type": "write", "auth": "both",  "description": "Log time worked on a Jira issue"},
+  // ── Teamwork Graph ──
+  {"name": "getTeamworkGraphContext",      "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get cross-product context for a Jira issue including linked PRs, commits, branches, and page hierarchy"},
+  {"name": "getTeamworkGraphObject",       "product": "Teamwork Graph", "category": "Read", "type": "read", "auth": "both", "description": "Get a specific object from the Teamwork Graph by ARI"},
+  {"name": "addTeamworkGraphContext",      "product": "Teamwork Graph", "category": "Write","type": "write","auth": "both", "description": "Add context or relationships to an object in the Teamwork Graph"}
 ];
 let activeToolProduct = 'all';
 const PRODUCT_COLORS = {'Jira':'#0052cc','Confluence':'#0065ff','Compass':'#6554c0','JSM':'#de350b','Bitbucket':'#0747a6','Platform':'#00875a','Teamwork Graph':'#ff8b00'};
