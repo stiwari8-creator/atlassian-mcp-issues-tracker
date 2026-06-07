@@ -71,6 +71,7 @@
     --yellow-subtle: #3a2c0a;
     --radius: 8px;
     --radius-sm: 4px;
+    --bg-secondary: #161b22;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
@@ -314,6 +315,17 @@
       <p style="color:var(--text-muted);font-size:13px;">Synthesized from GitHub issues and enterprise VOC signals. Ranked by signal strength across both sources.</p>
     </div>
     <div id="jtbdList" style="display:flex;flex-direction:column;gap:16px;"></div>
+  </div>
+
+  <!-- Tools Tab -->
+  <div id="tab-tools" class="tab-pane active" style="padding:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <div id="tools-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <input id="toolsSearch" type="text" placeholder="🔍 Search tools..." oninput="renderTools()"
+        style="margin-left:auto;padding:7px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;min-width:200px;">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="tools-product-filters"></div>
+    <div id="toolsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;"></div>
   </div>
 
 </div>
@@ -866,6 +878,7 @@ function timeAgo(iso) {
 }
 
 init();
+// initToolsTab is called via DOMContentLoaded script block below
 
 
 // ═══════════ TOOLS TAB ═══════════
@@ -936,23 +949,11 @@ function initToolsTab() {
 </script>
 
 
-  <!-- Tools Tab - must be before the DOMContentLoaded init call below -->
-  <div id="tab-tools" class="tab-pane active" style="padding:20px;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-      <div id="tools-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
-      <input id="toolsSearch" type="text" placeholder="🔍 Search tools..." oninput="renderTools()"
-        style="margin-left:auto;padding:7px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;min-width:200px;">
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="tools-product-filters"></div>
-    <div id="toolsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;"></div>
-  </div>
-
 <script>
-// Tools div is now in DOM - safe to initialize
+// Initialize tools tab on load
 document.addEventListener('DOMContentLoaded', function() {
   initToolsTab();
 });
-// Also call immediately in case DOMContentLoaded already fired
 if (document.readyState !== 'loading') {
   initToolsTab();
 }
